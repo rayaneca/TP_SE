@@ -20,9 +20,9 @@ int shouldExit = 0;
 #define N 5 // Max number of items in buffer
 typedef struct T
 {
-    int *data;
-    int *posX;
-    int *posY;
+    int *d;
+    int *X;
+    int *Y;
     int count;
     int in;
     int out;
@@ -39,21 +39,21 @@ sem_t full;
 // Producer
 void *producer(void *arg)
 {
-    int index = *(int *)arg;
+    int fori = *(int *)arg;
     int item = 0;
-
+	printf("((%d",fori);
     for (int i = 0; i < m2; i++)
     {
         item = 0;
         for (int j = 0; j < m1; j++)
-            item += B[index][j] * C[j][i];
+            item += B[fori][j] * C[j][i];
 
         sem_wait(&empty);
         pthread_mutex_lock(&mutex);
 
-        buffer.data[buffer.in] = item;
-        buffer.posX[buffer.in] = index;
-        buffer.posY[buffer.in] = i;
+        buffer.d[buffer.in] = item;
+        buffer.X[buffer.in] = fori;
+        buffer.Y[buffer.in] = i;
         buffer.in = (buffer.in + 1) % N;
         buffer.count++;
         buffer.produced++;
@@ -85,8 +85,8 @@ void *consumer(void *arg)
             break;
         }
 
-        item = buffer.data[buffer.out];
-        A[buffer.posX[buffer.out]][buffer.posY[buffer.out]] = item;
+        item = buffer.d[buffer.out];
+        A[buffer.X[buffer.out]][buffer.Y[buffer.out]] = item;
         buffer.out = (buffer.out + 1) % N;
         buffer.count--;
         buffer.consumed++;
@@ -166,9 +166,9 @@ int main(int argc, char *argv[])
     }
     printf("\n\n");
 
-    buffer.data = (int *)malloc(N * sizeof(int));
-    buffer.posX = (int *)malloc(N * sizeof(int));
-    buffer.posY = (int *)malloc(N * sizeof(int));
+    buffer.d = (int *)malloc(N * sizeof(int));
+    buffer.X = (int *)malloc(N * sizeof(int));
+    buffer.Y = (int *)malloc(N * sizeof(int));
     buffer.count = 0;
     buffer.in = 0;
     buffer.out = 0;
