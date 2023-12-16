@@ -111,9 +111,13 @@ void *consumer(void *arg)
 int Main ()
 {
     printf("Enter number of rows and cols in matrix B: ");
-    scanf("%d %d", &n1, &m1);
+    n1=3;
+    n2=3;
+    m1=3;
+    m2=3;
+   // scanf("%d %d", &n1, &m1);
     printf("Enter number of rows and cols in matrix C: ");
-    scanf("%d %d", &n2, &m2);
+    //scanf("%d %d", &n2, &m2);
     if (m1 != n2)
     {
         perror("errur  B*C is not possible .\n");
