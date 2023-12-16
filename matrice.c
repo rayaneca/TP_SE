@@ -1,25 +1,23 @@
 /*
- bouafia rayane  
-*/
-//section include..
-#include <unistd.h>     /* Symbolic Constants */
-#include <stdio.h>      /* Input/Output */
-#include <stdlib.h>     /* General Utilities */
-#include <pthread.h>    /* POSIX Threads */
-#include <semaphore.h>  /* semaphore */
+ bouafia rayane
+ */
 
-//define
-#define N 4 // places dans le buffer
+// Includes
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <semaphore.h>
 
-//variable globales 
+// Global variables
 int n1, m1, n2, m2;
-//les matrices
+int **A;
 int **B;
 int **C;
-int **A;
 int shouldExit = 0;
-//le tampon
 
+// Buffer
+#define N 5 // Max number of items in buffer
 typedef struct T
 {
     int *data;
@@ -33,7 +31,7 @@ typedef struct T
 } T;
 T buffer;
 
-//pour la synchronisation 
+// Semaphores
 pthread_mutex_t mutex;
 sem_t empty;
 sem_t full;
@@ -60,7 +58,7 @@ void *producer(void *arg)
         buffer.count++;
         buffer.produced++;
 
-       
+        // printf("Producer [%d] Produced item: %d\n", index + 1, item);
 
         pthread_mutex_unlock(&mutex);
         sem_post(&full);
@@ -104,57 +102,91 @@ void *consumer(void *arg)
         sem_post(&empty);
     }
 
-   
+    // printf("**Consumer [%d] Finished.\n", index + 1);
     pthread_exit(NULL);
 }
 
-int Main ()
+
+
+int main(int argc, char *argv[])
 {
+    // Seed the random number generator
+    srand(time(NULL));
+
+    // Ask user for n1,m1 for B[n1][m1] and n2,m2 for C[n2][m2]
     printf("Enter number of rows and cols in matrix B: ");
     n1=3;
     n2=3;
     m1=3;
     m2=3;
-   // scanf("%d %d", &n1, &m1);
-    printf("Enter number of rows and cols in matrix C: ");
-    //scanf("%d %d", &n2, &m2);
+
+    // Make sure that multiplication is possible
     if (m1 != n2)
     {
-        perror("errur  B*C is not possible .\n");
+        perror("errur of B*C is not possible.\n");
         exit(EXIT_FAILURE);
     }
-     // Allocate memory for matrix B
-    B = (int **)malloc(n1 * sizeof(int *));
-    for (int i = 0; i < n1; i++) {
-        B[i] = (int *)malloc(m1 * sizeof(int));
-    }
 
-    // Allocate memory for matrix C
+     // Generate matrix B
+    B = (int **)malloc(n1 * sizeof(int *));
+    for (int i = 0; i < n1; i++)
+        B[i] = (int *)malloc(m1 * sizeof(int));
+
+   
+    // Generate matrix C
     C = (int **)malloc(n2 * sizeof(int *));
-    for (int i = 0; i < n2; i++) {
+    for (int i = 0; i < n2; i++)
         C[i] = (int *)malloc(m2 * sizeof(int));
+
+    
+    // Fill matrix B with random numbers
+    for (int i = 0; i < n1; i++)
+        for (int j = 0; j < m1; j++)
+            B[i][j] = rand() % 10;
+
+    // Fill matrix C with random numbers
+    for (int i = 0; i < n2; i++)
+        for (int j = 0; j < m2; j++)
+            C[i][j] = rand() % 10;
+
+    // Pretty print both matrices
+    printf("\n| Matrix B\n");
+    for (int i = 0; i < n1; i++)
+    {
+        for (int j = 0; j < m1; j++)
+            printf("%d  ", B[i][j]);
+        printf("\n");
     }
+    printf("\n| Matrix C\n");
+    for (int i = 0; i < n2; i++)
+    {
+        for (int j = 0; j < m2; j++)
+            printf("%d  ", C[i][j]);
+        printf("\n");
+    }
+    printf("\n\n");
+
+    buffer.data = (int *)malloc(N * sizeof(int));
+    buffer.posX = (int *)malloc(N * sizeof(int));
+    buffer.posY = (int *)malloc(N * sizeof(int));
+    buffer.count = 0;
+    buffer.in = 0;
+    buffer.out = 0;
+    buffer.produced = 0;
+    buffer.consumed = 0;
+
+    // Init matrix A
     A = (int **)malloc(n1 * sizeof(int *));
     for (int i = 0; i < n1; i++)
     {
         A[i] = (int *)malloc(m2 * sizeof(int));
     }
-        // Fill matrix B
-    for (int i = 0; i < n1; i++)
-        for (int j = 0; j < m1; j++)
-            B[i][j] = rand() % 10;
-
-    // Fill matrix C
-    for (int i = 0; i < n2; i++)
-        for (int j = 0; j < m2; j++)
-            C[i][j] = rand() % 10;
-// Initialisation
-sem_init(&mutex,0,1);//exclusion mutuelle 
-sem_init(&empty, 0 , N);  // buffer vide
-sem_init(&full, 0 , 0);   // buffer vide
-pthread_mutex_init(&mutex, NULL);
-sem_init(&empty, 0, N);
-//creation des threads
+  
+    // Init semaphores
+    pthread_mutex_init(&mutex, NULL);
+    sem_init(&empty, 0, N);
+    sem_init(&full, 0, 0) ;
+   
 
     // Declare threads
     pthread_t producers_t[n1];
@@ -165,26 +197,17 @@ sem_init(&empty, 0, N);
     {
         int *index = malloc(sizeof(int));
         *index = i;
-        if (pthread_create(&producers_t[i], NULL, producer, index) != 0)
-        {
-            perror("Thread creation failed.\n");
-            exit(EXIT_FAILURE);
-        }
+        pthread_create(&producers_t[i], NULL, producer, index);
+      
     }
 
     for (int i = 0; i < N; i++)
     {
         int *index = malloc(sizeof(int));
         *index = i;
-        if (pthread_create(&consumer_t[i], NULL, consumer, index) != 0)
-        {
-            perror("Thread creation failed.\n");
-            exit(EXIT_FAILURE);
-        }
+        pthread_create(&consumer_t[i], NULL, consumer, index) ;
+       
     }
-
-
-//attente des threads
 
     // Join threads
     for (int i = 0; i < n1; i++)
@@ -202,13 +225,10 @@ sem_init(&empty, 0, N);
         printf("\n");
     }
 
-
-
-//destruction...
-   pthread_mutex_destroy(&mutex);
+    // Cleanup
+    pthread_mutex_destroy(&mutex);
     sem_destroy(&empty);
     sem_destroy(&full);
-
-
-return 0;
+   
+    return 0;
 }
