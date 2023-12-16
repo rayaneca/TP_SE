@@ -150,14 +150,14 @@ int main(int argc, char *argv[])
             C[i][j] = rand() % 10;
 
     // Pretty print both matrices
-    printf("\n| Matrix B\n");
+    printf("\n****  B ****\n");
     for (int i = 0; i < n1; i++)
     {
         for (int j = 0; j < m1; j++)
             printf("%d  ", B[i][j]);
         printf("\n");
     }
-    printf("\n| Matrix C\n");
+    printf("\n****  C ****\n");
     for (int i = 0; i < n2; i++)
     {
         for (int j = 0; j < m2; j++)
@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
         pthread_join(consumer_t[i], NULL);
 
     // Pretty print matrix A
-    printf("\n| Matrix A\n");
+    printf("\n****  A ****\n");
     for (int i = 0; i < n1; i++)
     {
         for (int j = 0; j < m2; j++)
