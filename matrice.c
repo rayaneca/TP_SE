@@ -17,6 +17,7 @@ int n1, m1, n2, m2;
 int **B;
 int **C;
 int **A;
+int shouldExit = 0;
 //le tampon
 
 typedef struct T
